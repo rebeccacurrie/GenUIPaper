@@ -2,6 +2,9 @@
   "framework": "vite",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/api/table", "destination": "/api/table" }
+    { "source": "/api/table", "destination": "/api/table" },
+    { "source": "/api/logs", "destination": "/api/logs" },
+    { "source": "/api/run-batch", "destination": "/api/run-batch" },
+    { "source": "/api/config", "destination": "/api/config" }
   ]
 }

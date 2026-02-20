@@ -1,8 +1,13 @@
 import { useState } from "react";
 import { generateTable } from "../lib/tableClient";
 import type { TableSpec } from "../lib/tableSpec";
+import {
+  METAMORPHIC_RELATIONS,
+  compareStructure,
+  type ComparisonVerdict,
+} from "../../lib/experiment";
 
-type Status = "pending" | "running" | "pass" | "fail";
+type Status = "pending" | "running" | ComparisonVerdict;
 
 interface TestResult {
   name: string;
@@ -10,61 +15,9 @@ interface TestResult {
   reason: string;
 }
 
-const BASE_PROMPT = "top 5 countries by population";
-
-const TEST_VARIANTS: { name: string; promptA: string; promptB: string }[] = [
-  {
-    name: "UPPER vs lower case",
-    promptA: BASE_PROMPT.toUpperCase(),
-    promptB: BASE_PROMPT.toLowerCase(),
-  },
-  {
-    name: '"show" vs "display" prefix',
-    promptA: `show ${BASE_PROMPT}`,
-    promptB: `display ${BASE_PROMPT}`,
-  },
-  {
-    name: 'with/without "in a table" suffix',
-    promptA: BASE_PROMPT,
-    promptB: `${BASE_PROMPT} in a table`,
-  },
-  {
-    name: "idempotency (same prompt twice)",
-    promptA: BASE_PROMPT,
-    promptB: BASE_PROMPT,
-  },
-];
-
-function compareStructure(a: TableSpec, b: TableSpec): string | null {
-  if (a.columns.length !== b.columns.length) {
-    return `Column count differs: ${a.columns.length} vs ${b.columns.length}`;
-  }
-
-  const colsA = a.columns.map((c) => c.toLowerCase());
-  const colsB = b.columns.map((c) => c.toLowerCase());
-  for (let i = 0; i < colsA.length; i++) {
-    if (colsA[i] !== colsB[i]) {
-      return `Column name mismatch at index ${i}: "${a.columns[i]}" vs "${b.columns[i]}"`;
-    }
-  }
-
-  for (let i = 0; i < a.rows.length; i++) {
-    if (a.rows[i].length !== a.columns.length) {
-      return `Response A row ${i} has ${a.rows[i].length} cells, expected ${a.columns.length}`;
-    }
-  }
-  for (let i = 0; i < b.rows.length; i++) {
-    if (b.rows[i].length !== b.columns.length) {
-      return `Response B row ${i} has ${b.rows[i].length} cells, expected ${b.columns.length}`;
-    }
-  }
-
-  return null;
-}
-
-export default function MetamorphicTests() {
+export default function MetamorphicTests({ basePrompt }: { basePrompt: string }) {
   const [results, setResults] = useState<TestResult[]>(
-    TEST_VARIANTS.map((v) => ({ name: v.name, status: "pending", reason: "" })),
+    METAMORPHIC_RELATIONS.map((r) => ({ name: r.name, status: "pending", reason: "" })),
   );
   const [running, setRunning] = useState(false);
 
@@ -77,30 +30,44 @@ export default function MetamorphicTests() {
   const runAll = async () => {
     setRunning(true);
     setResults(
-      TEST_VARIANTS.map((v) => ({ name: v.name, status: "running", reason: "" })),
+      METAMORPHIC_RELATIONS.map((r) => ({ name: r.name, status: "running" as Status, reason: "" })),
     );
 
-    const promises = TEST_VARIANTS.map(async (variant, idx) => {
+    const promises = METAMORPHIC_RELATIONS.map(async (relation, idx) => {
       updateResult(idx, { status: "running" });
       try {
+        const { promptA, promptB } = relation.makePrompts(basePrompt);
         const [a, b] = await Promise.all([
-          generateTable(variant.promptA),
-          generateTable(variant.promptB),
+          generateTable(promptA),
+          generateTable(promptB),
         ]);
-        const failure = compareStructure(a, b);
-        if (failure) {
-          updateResult(idx, { status: "fail", reason: failure });
-        } else {
-          updateResult(idx, { status: "pass", reason: "Structures match" });
-        }
+        const result = compareStructure(a as TableSpec, b as TableSpec);
+        updateResult(idx, { status: result.verdict, reason: result.reason });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        updateResult(idx, { status: "fail", reason: `Error: ${msg}` });
+        updateResult(idx, { status: "FAIL", reason: `Error: ${msg}` });
       }
     });
 
     await Promise.all(promises);
     setRunning(false);
+  };
+
+  const badgeClass = (status: Status): string => {
+    switch (status) {
+      case "PASS": return "test-badge pass";
+      case "WEAK_PASS": return "test-badge weak-pass";
+      case "FAIL": return "test-badge fail";
+      case "running": return "test-badge running";
+      default: return "test-badge pending";
+    }
+  };
+
+  const badgeLabel = (status: Status): string => {
+    switch (status) {
+      case "WEAK_PASS": return "WEAK PASS";
+      default: return status.toUpperCase();
+    }
   };
 
   return (
@@ -114,7 +81,7 @@ export default function MetamorphicTests() {
       <div className="test-results">
         {results.map((r, i) => (
           <div key={i} className="test-result">
-            <span className={`test-badge ${r.status}`}>{r.status.toUpperCase()}</span>
+            <span className={badgeClass(r.status)}>{badgeLabel(r.status)}</span>
             <span style={{ fontWeight: 600 }}>{r.name}</span>
             {r.reason && <span style={{ color: "#6b7280", fontSize: 13 }}> — {r.reason}</span>}
           </div>

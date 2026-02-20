@@ -19,6 +19,16 @@ body {
   flex-direction: column;
 }
 
+.version-bar {
+  padding: 6px 16px;
+  background: #1e293b;
+  color: #94a3b8;
+  font-size: 12px;
+  font-family: monospace;
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
 .app-header {
   padding: 24px 16px 16px;
   border-bottom: 1px solid #e5e7eb;
@@ -253,6 +263,11 @@ body {
 .test-badge.fail {
   background: #fee2e2;
   color: #991b1b;
+}
+
+.test-badge.weak-pass {
+  background: #fef3c7;
+  color: #92400e;
 }
 
 .test-badge.running {

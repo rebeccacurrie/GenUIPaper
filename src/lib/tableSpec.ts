@@ -1,13 +1,13 @@
 import type { GeneratedSpec } from "../types";
 
-export interface TableSpec {
+export type { TableSpec } from "../../lib/experiment";
+
+/** Convert a TableSpec into a json-render Spec (Card wrapping a Table). */
+export function tableSpecToRenderSpec(table: {
   title: string;
   columns: string[];
   rows: string[][];
-}
-
-/** Convert a TableSpec into a json-render Spec (Card wrapping a Table). */
-export function tableSpecToRenderSpec(table: TableSpec): GeneratedSpec {
+}): GeneratedSpec {
   return {
     root: "card",
     elements: {

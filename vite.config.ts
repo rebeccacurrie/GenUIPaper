@@ -11,12 +11,21 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       {
-        name: 'api-table',
+        name: 'api-routes',
         configureServer(server) {
           server.middlewares.use(async (req, res, next) => {
             if (req.url === '/api/table' && req.method === 'POST') {
               const { handleApiTable } = await import('./server/apiTable')
               await handleApiTable(req, res)
+            } else if (req.url === '/api/logs' && req.method === 'GET') {
+              const { handleApiLogs } = await import('./server/apiLogs')
+              await handleApiLogs(req, res)
+            } else if (req.url === '/api/run-batch' && req.method === 'POST') {
+              const { handleApiRunBatch } = await import('./server/apiRunBatch')
+              await handleApiRunBatch(req, res)
+            } else if (req.url === '/api/config' && req.method === 'GET') {
+              const { handleApiConfig } = await import('./server/apiConfig')
+              await handleApiConfig(req, res)
             } else {
               next()
             }
