@@ -26,9 +26,9 @@ export default defineConfig(({ mode }) => {
     ],
     resolve: {
       alias: {
-        '@json-render/core': path.resolve(__dirname, 'json-render/packages/core/dist/index.mjs'),
-        '@json-render/react/schema': path.resolve(__dirname, 'json-render/packages/react/dist/schema.mjs'),
-        '@json-render/react': path.resolve(__dirname, 'json-render/packages/react/dist/index.mjs'),
+        '@json-render/core': path.resolve(__dirname, 'lib/json-render-core/index.mjs'),
+        '@json-render/react/schema': path.resolve(__dirname, 'lib/json-render-react/schema.mjs'),
+        '@json-render/react': path.resolve(__dirname, 'lib/json-render-react/index.mjs'),
       },
     },
   }

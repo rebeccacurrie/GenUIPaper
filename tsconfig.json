@@ -17,9 +17,9 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
     "paths": {
-      "@json-render/core": ["./json-render/packages/core/dist/index.d.mts"],
-      "@json-render/react/schema": ["./json-render/packages/react/dist/schema.d.mts"],
-      "@json-render/react": ["./json-render/packages/react/dist/index.d.mts"]
+      "@json-render/core": ["./lib/json-render-core/index.d.mts"],
+      "@json-render/react/schema": ["./lib/json-render-react/schema.d.mts"],
+      "@json-render/react": ["./lib/json-render-react/index.d.mts"]
     }
   },
   "include": ["src", "server", "vite.config.ts"]
