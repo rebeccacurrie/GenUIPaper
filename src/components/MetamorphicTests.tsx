@@ -6,6 +6,7 @@ import {
   compareStructure,
   type ComparisonVerdict,
 } from "../../api/_lib/experiment";
+import type { LogEntry } from "../App";
 
 type Status = "pending" | "running" | ComparisonVerdict;
 
@@ -15,7 +16,13 @@ interface TestResult {
   reason: string;
 }
 
-export default function MetamorphicTests({ basePrompt }: { basePrompt: string }) {
+interface Props {
+  basePrompt: string;
+  addLog: (entry: LogEntry) => void;
+  model: string;
+}
+
+export default function MetamorphicTests({ basePrompt, addLog, model }: Props) {
   const [results, setResults] = useState<TestResult[]>(
     METAMORPHIC_RELATIONS.map((r) => ({ name: r.name, status: "pending", reason: "" })),
   );
@@ -41,7 +48,35 @@ export default function MetamorphicTests({ basePrompt }: { basePrompt: string })
           generateTable(promptA),
           generateTable(promptB),
         ]);
-        const result = compareStructure(a as TableSpec, b as TableSpec);
+
+        addLog({
+          timestamp: new Date().toISOString(),
+          prompt: promptA,
+          model,
+          temperature: 0,
+          top_p: 1,
+          valid: true,
+          latencyMs: a.latencyMs,
+          title: a.table.title,
+          columns: a.table.columns.join("; "),
+          rowCount: a.table.rows.length,
+          raw: JSON.stringify(a.table),
+        });
+        addLog({
+          timestamp: new Date().toISOString(),
+          prompt: promptB,
+          model,
+          temperature: 0,
+          top_p: 1,
+          valid: true,
+          latencyMs: b.latencyMs,
+          title: b.table.title,
+          columns: b.table.columns.join("; "),
+          rowCount: b.table.rows.length,
+          raw: JSON.stringify(b.table),
+        });
+
+        const result = compareStructure(a.table as TableSpec, b.table as TableSpec);
         updateResult(idx, { status: result.verdict, reason: result.reason });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Renderer } from "@json-render/react";
 import { registry } from "./registry";
 import { generateTable } from "./lib/tableClient";
@@ -13,6 +13,20 @@ interface ExperimentConfig {
   version: string;
 }
 
+export interface LogEntry {
+  timestamp: string;
+  prompt: string;
+  model: string;
+  temperature: number;
+  top_p: number;
+  valid: boolean;
+  latencyMs: number;
+  title: string;
+  columns: string;
+  rowCount: number;
+  raw: string;
+}
+
 export default function App() {
   const [prompt, setPrompt] = useState("");
   const [spec, setSpec] = useState<GeneratedSpec | null>(null);
@@ -20,6 +34,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [showTests, setShowTests] = useState(false);
   const [config, setConfig] = useState<ExperimentConfig | null>(null);
+  const logsRef = useRef<LogEntry[]>([]);
 
   useEffect(() => {
     fetch("/api/config")
@@ -28,13 +43,30 @@ export default function App() {
       .catch(() => {});
   }, []);
 
+  const addLog = (entry: LogEntry) => {
+    logsRef.current.push(entry);
+  };
+
   const handleSend = async () => {
     if (!prompt.trim() || loading) return;
     setLoading(true);
     setError(null);
     setSpec(null);
     try {
-      const table = await generateTable(prompt);
+      const { table, latencyMs } = await generateTable(prompt);
+      addLog({
+        timestamp: new Date().toISOString(),
+        prompt,
+        model: config?.model ?? "gpt-4o-mini",
+        temperature: config?.temperature ?? 0,
+        top_p: config?.top_p ?? 1,
+        valid: true,
+        latencyMs,
+        title: table.title,
+        columns: table.columns.join("; "),
+        rowCount: table.rows.length,
+        raw: JSON.stringify(table),
+      });
       setSpec(tableSpecToRenderSpec(table));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -47,45 +79,40 @@ export default function App() {
     if (e.key === "Enter") handleSend();
   };
 
-  const handleExportCSV = async () => {
-    try {
-      const res = await fetch("/api/logs");
-      const logs = await res.json();
-      if (!logs.length) {
-        alert("No experiment logs to export.");
-        return;
-      }
-      const headers = [
-        "timestamp", "prompt", "model", "temperature", "top_p",
-        "valid", "latencyMs", "title", "columns", "rowCount", "raw",
-      ];
-      const csvRows = [headers.join(",")];
-      for (const log of logs) {
-        const row = [
-          log.timestamp,
-          `"${(log.prompt || "").replace(/"/g, '""')}"`,
-          log.model,
-          log.temperature,
-          log.top_p,
-          log.valid,
-          log.latencyMs,
-          `"${(log.parsed?.title || "").replace(/"/g, '""')}"`,
-          `"${(log.parsed?.columns || []).join("; ")}"`,
-          log.parsed?.rows?.length ?? 0,
-          `"${(log.raw || "").replace(/"/g, '""').replace(/\n/g, " ")}"`,
-        ];
-        csvRows.push(row.join(","));
-      }
-      const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `experiment-logs-${new Date().toISOString().slice(0, 19)}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      alert("Failed to export logs.");
+  const handleExportCSV = () => {
+    const logs = logsRef.current;
+    if (!logs.length) {
+      alert("No experiment logs to export. Generate some tables or run tests first.");
+      return;
     }
+    const headers = [
+      "timestamp", "prompt", "model", "temperature", "top_p",
+      "valid", "latencyMs", "title", "columns", "rowCount", "raw",
+    ];
+    const csvRows = [headers.join(",")];
+    for (const log of logs) {
+      const row = [
+        log.timestamp,
+        `"${(log.prompt || "").replace(/"/g, '""')}"`,
+        log.model,
+        log.temperature,
+        log.top_p,
+        log.valid,
+        log.latencyMs,
+        `"${(log.title || "").replace(/"/g, '""')}"`,
+        `"${(log.columns || "").replace(/"/g, '""')}"`,
+        log.rowCount,
+        `"${(log.raw || "").replace(/"/g, '""').replace(/\n/g, " ")}"`,
+      ];
+      csvRows.push(row.join(","));
+    }
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `experiment-logs-${new Date().toISOString().slice(0, 19)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const examples = [
@@ -128,7 +155,7 @@ export default function App() {
 
       {loading && <div className="loading">Generating table...</div>}
 
-      {showTests && <MetamorphicTests basePrompt={prompt} />}
+      {showTests && <MetamorphicTests basePrompt={prompt} addLog={addLog} model={config?.model ?? "gpt-4o-mini"} />}
 
       {!spec && !loading && !showTests && (
         <div className="examples">
