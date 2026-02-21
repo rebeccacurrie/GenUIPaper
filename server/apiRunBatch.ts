@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { runBatchExperiment } from "../lib/experiment";
+import { runBatchExperiment } from "../api/_lib/experiment";
 import { readBody } from "./apiTable";
 
 export async function handleApiRunBatch(

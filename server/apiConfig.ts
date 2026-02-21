@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { getModelName } from "../lib/experiment";
+import { getModelName } from "../api/_lib/experiment";
 
 export async function handleApiConfig(
   _req: IncomingMessage,

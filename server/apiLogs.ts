@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { getLogs } from "../lib/experiment";
+import { getLogs } from "../api/_lib/experiment";
 
 export async function handleApiLogs(
   _req: IncomingMessage,

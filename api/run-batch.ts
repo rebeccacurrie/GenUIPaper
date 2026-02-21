@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { runBatchExperiment } from "../lib/experiment";
+import { runBatchExperiment } from "./_lib/experiment";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {

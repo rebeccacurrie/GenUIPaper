@@ -1,6 +1,6 @@
 import type { GeneratedSpec } from "../types";
 
-export type { TableSpec } from "../../lib/experiment";
+export type { TableSpec } from "../../api/_lib/experiment";
 
 /** Convert a TableSpec into a json-render Spec (Card wrapping a Table). */
 export function tableSpecToRenderSpec(table: {

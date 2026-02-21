@@ -4,7 +4,7 @@ import {
   isValidTableSpec,
   addLog,
   getModelName,
-} from "../lib/experiment";
+} from "../api/_lib/experiment";
 
 // ── Body parser ────────────────────────────────────────────────────
 export function readBody(req: IncomingMessage): Promise<string> {

@@ -22,5 +22,5 @@
       "@json-render/react": ["./lib/json-render-react/index.d.mts"]
     }
   },
-  "include": ["src", "server", "lib/experiment.ts", "vite.config.ts"]
+  "include": ["src", "server", "api/_lib/experiment.ts", "vite.config.ts"]
 }

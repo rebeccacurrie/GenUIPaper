@@ -4,7 +4,7 @@ import {
   isValidTableSpec,
   addLog,
   getModelName,
-} from "../lib/experiment";
+} from "./_lib/experiment";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {

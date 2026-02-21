@@ -5,7 +5,7 @@ import {
   METAMORPHIC_RELATIONS,
   compareStructure,
   type ComparisonVerdict,
-} from "../../lib/experiment";
+} from "../../api/_lib/experiment";
 
 type Status = "pending" | "running" | ComparisonVerdict;
 
