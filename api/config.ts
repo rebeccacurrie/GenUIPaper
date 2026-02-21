@@ -1,5 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getModelName } from "./_lib/experiment";
+
+function getModelName(): string {
+  return process.env.OPENAI_MODEL || "gpt-4o-mini";
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "GET") {
